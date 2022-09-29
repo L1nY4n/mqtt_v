@@ -169,13 +169,13 @@ impl MqttAppUI {
 
                         if config_btn.clicked() {
                             self.state.show_add = !self.state.show_add;
-                            let event_tab = Box::new(chat_tab::ChatView::new());
+                            let event_tab = Box::new(chat_tab::ChatTab::new());
                             let tree_tab = Box::new(tree_tab::TreeView::new("Tree"));
                             let publish_tab = Box::new(publish_tab::PubulishTab::new());
                             let mut tree = docking::Tree::new(vec![event_tab, tree_tab]);
 
                             let [a, b] =
-                                tree.split_below(NodeIndex::root(), 0.8, vec![publish_tab]);
+                                tree.split_below(NodeIndex::root(), 0.75, vec![publish_tab]);
 
                             self.tree = Some(tree)
                         }

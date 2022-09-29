@@ -12,7 +12,7 @@ use super::{
     client::Client,
 };
 
-pub struct ChatView {
+pub struct ChatTab {
     filter: Filter,
 }
 
@@ -34,7 +34,7 @@ impl Filter {
     }
 }
 
-impl ChatView {
+impl ChatTab {
     pub fn new() -> Self {
         Self {
             filter: Default::default(),
@@ -42,13 +42,13 @@ impl ChatView {
     }
 }
 
-impl docking::Tab<Client> for ChatView {
+impl docking::Tab<Client> for ChatTab {
     fn title(&self) -> &str {
-        "😡 Event"
+        "   Event"
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, client: &mut Client) {
-        ui.push_id("chart_view", |ui| {
+        ui.push_id("chat_tab", |ui| {
             egui::Frame::default()
                 .outer_margin(Margin::symmetric (2.,6.))
                 .inner_margin(4.)
