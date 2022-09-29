@@ -1,7 +1,8 @@
 use std::time::Duration;
 
 use rumqttc::{MqttOptions};
-pub use rumqttc::{Event,Packet,Outgoing};
+pub use rumqttc::{Event,Packet,Outgoing,Publish,mqttbytes::QoS};
+use tokio::sync::mpsc::Sender;
 
 
 #[derive(Clone)]
@@ -34,11 +35,12 @@ pub enum ToBackend {
     Startup,
     Shutdown,
 
-    NewClient(MqttOpts)
-
+    NewClient(MqttOpts),
 }
 
 type  ClientId  = String;
+#[derive(Debug)]
 pub enum ToFrontend {
+   ClientCreated(ClientId,Sender<rumqttc::Publish>),
    Packet(ClientId,Event)
 }

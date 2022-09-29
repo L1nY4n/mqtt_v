@@ -1,16 +1,28 @@
-use backend::message::{Event, MqttOpts};
+use backend::message::{Event, MqttOpts, ToBackend,Publish};
 use eframe::{
     egui::{style::Margin, Frame, Label, Layout, RichText, Ui},
     emath::Align,
     epaint::Color32,
 };
+use tokio::sync::mpsc::Sender;
 
-use super::THEME;
-
+use crate::ui::THEME;
 pub struct Client {
     pub options: MqttOpts,
     pub packets: Vec<Event>,
+    pub publish_tx: Option<Sender<Publish>>,
     pub recv: u32,
+}
+
+pub fn  create_client(options: MqttOpts,tx:  Sender<ToBackend>) -> Client {
+    
+    let _ = tx.try_send(ToBackend::NewClient(options.clone()));
+    Client{
+        options,
+        packets: vec![],
+        publish_tx: None,
+        recv: 0,
+    }
 }
 
 impl Client {
@@ -52,5 +64,4 @@ impl Client {
         }
     }
 }
-
 

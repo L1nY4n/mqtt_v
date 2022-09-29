@@ -21,18 +21,23 @@ use tokio::sync::mpsc::{Receiver, Sender};
 
 use self::{
     app_theme::AppTheme,
-    client::Client,
+ 
     widgets::{
         docking::{self, NodeIndex},
         packet::PacketUI,
-    },
+    }, client::publish_tab,
 };
 
 mod app_theme;
-mod chat_tab;
+
 mod client;
-mod tree_tab;
 mod widgets;
+
+use client::{
+    client::Client,
+    chat_tab,
+    tree_tab
+};
 
 use backend::message::{ToBackend, ToFrontend};
 
@@ -117,6 +122,12 @@ impl MqttAppUI {
                             client.recv += 1;
                         }
                     }
+                    ToFrontend::ClientCreated(client_id, tx) => {
+                        if let Some(client) = self.clients.get_mut(&client_id) {
+                            println!("created");
+                            client.publish_tx  = Some(tx)
+                        }
+                    },
                 }
                 //  ctx.request_repaint();
             }
@@ -151,9 +162,13 @@ impl MqttAppUI {
 
                         if config_btn.clicked() {
                             self.state.show_add = !self.state.show_add;
-                            let scene = Box::new(chat_tab::ChatView::new("Scene"));
-                            let node_tree = Box::new(tree_tab::TreeView::new("Scene2"));
-                            let tree = docking::Tree::new(vec![scene, node_tree]);
+                            let event_tab = Box::new(chat_tab::ChatView::new());
+                            let tree_tab = Box::new(tree_tab::TreeView::new("Tree"));
+                            let publish_tab = Box::new(publish_tab::PubulishTab::new());
+                            let mut tree = docking::Tree::new(vec![event_tab, tree_tab]);
+
+                            let [a, b] = tree.split_above(NodeIndex::root(), 0.2, vec![publish_tab]);
+                            
 
                             self.tree = Some(tree)
                         }
@@ -185,7 +200,7 @@ impl MqttAppUI {
                     let mut client = self.clients.get_mut(active).unwrap();
                     self.style = docking::Style::from_egui(ctx.style().as_ref());
 
-                    let id = Id::new("some hashable string");
+                    let id = Id::new("mqtt_docking");
                     let layer_id = LayerId::background();
                     let max_rect = ui.max_rect();
                     let clip_rect = ui.clip_rect();
@@ -203,7 +218,10 @@ impl MqttAppUI {
                 //         }
                 //     });
             } else {
-                ui.label("no active selected");
+                ui.centered_and_justified(|ui|{
+                         ui.label("no active selected");
+                });
+           
             }
         })
     }
@@ -274,16 +292,10 @@ impl MqttAppUI {
                                 )
                                 .clicked()
                             {
-                                let opts_c = self.state.mqtt_options.clone();
-                                let _ = self.front_tx.try_send(ToBackend::NewClient(opts_c));
-
+                                let client = client::client::create_client(self.state.mqtt_options.clone(),self.front_tx.clone());
                                 self.clients.insert(
                                     key,
-                                    Client {
-                                        options: self.state.mqtt_options.clone(),
-                                        packets: vec![],
-                                        recv: 0,
-                                    },
+                                    client
                                 );
                                 self.state.show_add = false;
                             }

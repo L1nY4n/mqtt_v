@@ -1,9 +1,13 @@
 use eframe::egui::{self, ScrollArea};
 
-use super::{widgets::{docking, packet::PacketUI}, client::Client};
+use crate::ui::widgets::docking;
+
+use super::client::Client;
+
+
 
 pub struct TreeView {
-    title: String,
+    title: String,  
 }
 
 impl TreeView {
@@ -22,15 +26,7 @@ impl docking::Tab<Client> for TreeView {
 
     fn ui(&mut self, ui: &mut egui::Ui, client: &mut Client) {
         ui.push_id("tree_view", |ui|{
-            ui.add_space(4.0);
-        ScrollArea::vertical()
-            .stick_to_bottom(true)
-           // .max_width(ui.available_width())
-            .show(ui, |ui| {
-                for pkt in &client.packets {
-                    PacketUI::new(pkt.clone()).show(ui)
-                }
-            });
+   
         });
     }
 }
