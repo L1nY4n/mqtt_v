@@ -21,11 +21,11 @@ use tokio::sync::mpsc::{Receiver, Sender};
 
 use self::{
     app_theme::AppTheme,
- 
+    client::publish_tab,
     widgets::{
         docking::{self, NodeIndex},
         packet::PacketUI,
-    }, client::publish_tab,
+    },
 };
 
 mod app_theme;
@@ -33,11 +33,7 @@ mod app_theme;
 mod client;
 mod widgets;
 
-use client::{
-    client::Client,
-    chat_tab,
-    tree_tab
-};
+use client::{chat_tab, client::Client, tree_tab};
 
 use backend::message::{ToBackend, ToFrontend};
 
@@ -116,18 +112,29 @@ impl MqttAppUI {
         match self.back_rx.try_recv() {
             Ok(msg) => {
                 match msg {
-                    ToFrontend::Packet(client_id, event) => {
+                    ToFrontend::ClientMsg(client_id, msg) => {
                         if let Some(client) = self.clients.get_mut(&client_id) {
-                            client.packets.push(event);
-                            client.recv += 1;
+                            match msg {
+                                backend::message::ClientMsg::Event(event) => {
+                                    if client.packets.len() > 10000 {
+                                        client.packets.truncate(10000);
+                                    }
+
+                                    client.packets.push(event);
+                                    client.recv += 1;
+                                }
+                                backend::message::ClientMsg::PublishReslt(result) => {
+                                    println!("pub result: {:#?}", result);
+                                }
+                            }
                         }
                     }
                     ToFrontend::ClientCreated(client_id, tx) => {
                         if let Some(client) = self.clients.get_mut(&client_id) {
                             println!("created");
-                            client.publish_tx  = Some(tx)
+                            client.publish_tx = Some(tx)
                         }
-                    },
+                    }
                 }
                 //  ctx.request_repaint();
             }
@@ -167,8 +174,8 @@ impl MqttAppUI {
                             let publish_tab = Box::new(publish_tab::PubulishTab::new());
                             let mut tree = docking::Tree::new(vec![event_tab, tree_tab]);
 
-                            let [a, b] = tree.split_above(NodeIndex::root(), 0.2, vec![publish_tab]);
-                            
+                            let [a, b] =
+                                tree.split_below(NodeIndex::root(), 0.8, vec![publish_tab]);
 
                             self.tree = Some(tree)
                         }
@@ -218,10 +225,9 @@ impl MqttAppUI {
                 //         }
                 //     });
             } else {
-                ui.centered_and_justified(|ui|{
-                         ui.label("no active selected");
+                ui.centered_and_justified(|ui| {
+                    ui.label("no active selected");
                 });
-           
             }
         })
     }
@@ -292,11 +298,11 @@ impl MqttAppUI {
                                 )
                                 .clicked()
                             {
-                                let client = client::client::create_client(self.state.mqtt_options.clone(),self.front_tx.clone());
-                                self.clients.insert(
-                                    key,
-                                    client
+                                let client = client::client::create_client(
+                                    self.state.mqtt_options.clone(),
+                                    self.front_tx.clone(),
                                 );
+                                self.clients.insert(key, client);
                                 self.state.show_add = false;
                             }
                         });

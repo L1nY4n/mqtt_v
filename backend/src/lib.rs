@@ -6,6 +6,8 @@ use tokio::{
     runtime::Builder,
     sync::mpsc::{Receiver, Sender},
 };
+
+use crate::message::ClientMsg;
 pub struct Backend {
     back_tx: Sender<ToFrontend>,
     front_rx: Receiver<ToBackend>,
@@ -65,8 +67,8 @@ impl Backend {
 
                             rt.spawn(async move {
                                 loop {
-                                    while let Ok((client_id, event)) = incomming_rx.try_recv() {
-                                        let _ = tx.try_send(ToFrontend::Packet(client_id, event));
+                                    while let Ok((client_id, clientMsg)) = incomming_rx.try_recv() {
+                                        let _ = tx.try_send(ToFrontend::ClientMsg(client_id, clientMsg));
                                     }
                                 }
                             });

@@ -132,7 +132,31 @@ fn render_incomming(ui: &mut Ui, packet: Packet) {
 
 fn render_outgoing(ui: & mut Ui,outgoing: Outgoing){
     match outgoing {
-        // Outgoing::Publish(_) => todo!(),
+         Outgoing::Publish(p) =>{
+            Frame {
+                fill: Color32::BLACK,
+                inner_margin: Margin::same(6.0),
+
+                ..Frame::default()
+            }
+            .show(ui, |ui| {
+                ui.set_max_width(400.0);
+                ui.vertical(|ui| {
+                    ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                        ui.label(p.to_string());
+                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                            ui.colored_label(
+                                Color32::from_rgb(128, 140, 255),
+                                format!("{:#?}", p.to_owned()),
+                            );
+                        })
+                    });
+                  
+           
+                  
+                });
+            });
+         },
         // Outgoing::Subscribe(_) => todo!(),
         // Outgoing::Unsubscribe(_) => todo!(),
         // Outgoing::PubAck(_) => todo!(),
