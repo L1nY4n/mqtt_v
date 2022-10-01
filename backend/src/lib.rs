@@ -7,7 +7,7 @@ use tokio::{
     sync::mpsc::{Receiver, Sender},
 };
 
-use crate::message::ClientMsg;
+use crate::message::FromClient;
 pub struct Backend {
     back_tx: Sender<ToFrontend>,
     front_rx: Receiver<ToBackend>,
@@ -42,8 +42,9 @@ impl Backend {
                     match message {
                         ToBackend::NewClient(opts) => {
                             println!("NewClient");
-                            let (incomming_tx, mut incomming_rx) = tokio::sync::mpsc::channel(10);
-                            let (outgoing_tx, outgoing_rx) = tokio::sync::mpsc::channel(10);
+                            
+                            let (incomming_tx, mut incomming_rx) = tokio::sync::mpsc::channel(100);
+                            let (outgoing_tx, outgoing_rx) = tokio::sync::mpsc::channel(100);
                             let back_tx = self.back_tx.clone();
                             rt.spawn(async move {
                                 match opts {

@@ -65,21 +65,15 @@ impl Default for State {
         Self {
             show_add: Default::default(),
             active_client: None,
-            mqtt_options: MqttOpts::V3(OptionsV3 {
-                client_id: "mosquitto".to_string(),
-                broker_addr: "test.mosquitto.org".to_string(),
-                port: 1883,
-                keep_alive: true,
-                heatbbeat: 20,
-            }),
+            mqtt_options: Default::default()
         }
     }
 }
 
 impl MqttAppUI {
     pub fn new(cc: &CreationContext) -> Self {
-        let (front_tx, front_rx) = tokio::sync::mpsc::channel(10);
-        let (back_tx, back_rx) = tokio::sync::mpsc::channel(10);
+        let (front_tx, front_rx) = tokio::sync::mpsc::channel(100);
+        let (back_tx, back_rx) = tokio::sync::mpsc::channel(100);
 
         let frame_clone = cc.egui_ctx.clone();
         thread::spawn(move || {
@@ -115,15 +109,13 @@ impl MqttAppUI {
                     ToFrontend::ClientMsg(client_id, msg) => {
                         if let Some(client) = self.clients.get_mut(&client_id) {
                             match msg {
-                                backend::message::ClientMsg::Event(event) => {
-                                    if client.packets.len() > 10000 {
-                                        client.packets.truncate(10000);
-                                    }
+                                backend::message::FromClient::Event(event) => {
+                                  
 
                                     client.packets.push(event);
                                     client.recv += 1;
                                 }
-                                backend::message::ClientMsg::PublishReslt(result) => {
+                                backend::message::FromClient::PublishReslt(result) => {
                                     println!("pub result: {:#?}", result);
                                 }
                             }
@@ -148,7 +140,7 @@ impl MqttAppUI {
 // ui
 impl MqttAppUI {
     fn render_side_panel(&mut self, ctx: &Context) -> InnerResponse<()> {
-        SidePanel::left("options_panel")
+        SidePanel::left("left_panel")
             .frame(Frame {
                 inner_margin: THEME.margin.frame_margin,
                 fill: THEME.colors.dark_gray,
@@ -159,6 +151,9 @@ impl MqttAppUI {
             .show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = THEME.spacing.widget_spacing;
                 menu::bar(ui, |ui| {
+                    ui.with_layout(Layout::left_to_right(Align::Center), |ui|{
+                        ui.add(Label::new(RichText::new("Connections")));
+                    });
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         // config button
                         let config_btn = ui.add(Button::new(
@@ -288,6 +283,8 @@ impl MqttAppUI {
                                 ui.add(Slider::new(&mut v3.heatbbeat, 5..=30).suffix("s"));
                             }
                         });
+                        ui.end_row();
+                        ui.add(Checkbox::new(&mut v3.clean_session, "clean_session"));
                         ui.separator();
                         ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
                             if ui

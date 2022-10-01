@@ -77,7 +77,7 @@ impl docking::Tab<Client> for PubulishTab {
                                     );
                                     publish.retain = self.retain;
                                     println!("{:?}", publish);
-                                    let res = tx.try_send(publish);
+                                    let res = tx.try_send(backend::message::ToClient::Publish(publish));
                                     println!("{:?}", res);
                                 } else {
                                     println!("no tx")

@@ -1,4 +1,4 @@
-use backend::message::{Event, MqttOpts, ToBackend,Publish};
+use backend::message::{Event, MqttOpts, ToBackend,Publish, ToClient, Topic,QoS};
 use eframe::{
     egui::{style::Margin, Frame, Label, Layout, RichText, Ui},
     emath::Align,
@@ -10,7 +10,8 @@ use crate::ui::THEME;
 pub struct Client {
     pub options: MqttOpts,
     pub packets: Vec<Event>,
-    pub publish_tx: Option<Sender<Publish>>,
+    pub publish_tx: Option<Sender<ToClient>>,
+    pub subscriptions : Vec<(Topic,QoS)>,
     pub recv: u32,
 }
 
@@ -21,12 +22,14 @@ pub fn  create_client(options: MqttOpts,tx:  Sender<ToBackend>) -> Client {
         options,
         packets: vec![],
         publish_tx: None,
+        subscriptions: vec![],
         recv: 0,
     }
 }
 
 impl Client {
-    pub fn show(&self, ui: &mut Ui, client_id: &str, active: bool, on_click: impl FnOnce()) {
+    pub fn show(&
+        self, ui: &mut Ui, client_id: &str, active: bool, on_click: impl FnOnce()) {
         let (title_color, bg) = if active {
             (Color32::LIGHT_BLUE, Color32::BLACK)
         } else {
@@ -56,7 +59,14 @@ impl Client {
 
             ui.horizontal(|ui| {
                 ui.label("recv: ");
-                ui.colored_label(Color32::YELLOW, self.recv.to_string())
+                ui.colored_label(Color32::YELLOW, self.recv.to_string());
+                if ui.button(RichText::new("🚫").color(Color32::LIGHT_RED)).clicked(){
+                    if let Some(tx) = & self.publish_tx {
+                       // tx.try_send(ToClient::Disconnect(("#".to_owned(),QoS::AtMostOnce)));
+                       tx.try_send(ToClient::Disconnect);
+                    }
+                   
+                }
             });
         });
         if client_frame.response.clicked() {

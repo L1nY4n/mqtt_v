@@ -58,7 +58,9 @@ impl docking::Tab<Client> for ChatTab {
                     ui.horizontal(|ui| {
                         ui.set_width(ui.available_width());
                         ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                     
+                            if ui.button("📝").clicked() {
+                    
+                            }
                         });
 
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
