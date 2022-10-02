@@ -126,7 +126,9 @@ fn render_incomming(ui: &mut Ui, packet: Packet) {
         
         }
         // Packet::Disconnect => todo!(),
-        _ => {}
+        _ => {
+            
+        }
     }
 }
 

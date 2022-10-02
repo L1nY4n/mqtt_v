@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use rumqttc::MqttOptions;
-pub use rumqttc::{mqttbytes::QoS, ClientError, Event, Outgoing, Packet, Publish, Subscribe};
+pub use rumqttc::{QoS, ClientError, Event, Outgoing, Packet, Publish, Subscribe};
 use tokio::sync::mpsc::Sender;
 
 #[derive(Clone)]
@@ -66,6 +66,7 @@ pub enum ToClient {
    Disconnect,
     Publish(Publish),
     Subscribe((Topic, QoS)),
+    Unsubscribe(Topic)
 }
 #[derive(Debug)]
 pub enum ToFrontend {
