@@ -15,6 +15,6 @@ async fn  main() {
     .. NativeOptions::default()
   };
 
-  eframe::run_native("mqtt v", native_options, Box::new(|cc| Box::new(MqttAppUI::new(cc))));
+  eframe::run_native("mqtt V", native_options, Box::new(|cc| Box::new(MqttAppUI::new(cc))));
 
 }

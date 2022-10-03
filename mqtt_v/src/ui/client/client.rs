@@ -1,4 +1,6 @@
-use backend::message::{Event, MqttOpts, Publish, QoS, ToBackend, ToClient, Topic};
+use backend::message::{
+    Event, FromClient, MqttOpts, Packet, Publish, QoS, ToBackend, ToClient, Topic, Outgoing,
+};
 use eframe::{
     egui::{style::Margin, CursorIcon, Frame, Label, Layout, RichText, Sense, Ui},
     emath::Align,
@@ -6,9 +8,10 @@ use eframe::{
 };
 use tokio::sync::mpsc::Sender;
 
-use crate::ui::THEME;
+use crate::ui::{THEME, widgets::status_led::StatusLed};
 
 pub struct Client {
+    pub connected: bool,
     pub options: MqttOpts,
     pub packets: Vec<Event>,
     pub publish_tx: Option<Sender<ToClient>>,
@@ -26,6 +29,7 @@ pub struct Subcribe {
 pub fn create_client(options: MqttOpts, tx: Sender<ToBackend>) -> Client {
     let _ = tx.try_send(ToBackend::NewClient(options.clone()));
     Client {
+        connected: false,
         options,
         packets: vec![],
         publish_tx: None,
@@ -35,6 +39,58 @@ pub fn create_client(options: MqttOpts, tx: Sender<ToBackend>) -> Client {
 }
 
 impl Client {
+    pub fn handle_msg(&mut self, msg: FromClient) {
+        match msg {
+            FromClient::Event(event) => {
+                let event_c = event.clone();
+                match event {
+                    Event::Incoming(income) => match income {
+                        Packet::Connect(_) => {},
+                        Packet::ConnAck(_) => {
+                            self.connected =true;
+                        },
+                        Packet::Publish(p) => {
+                           
+                            self.recv += 1;
+                        },
+                        Packet::PubAck(_) => {},
+                        Packet::PubRec(_) => {},
+                        Packet::PubRel(_) => {},
+                        Packet::PubComp(_) => {},
+                        Packet::Subscribe(_) => {},
+                        Packet::SubAck(_) => {},
+                        Packet::Unsubscribe(_) => {},
+                        Packet::UnsubAck(_) => {},
+                        Packet::PingReq => {},
+                        Packet::PingResp => {},
+                        Packet::Disconnect => {
+                            self.connected=false
+                        },
+                    },
+                    Event::Outgoing(outgoing) => match outgoing {
+                        Outgoing::Publish(_) => {},
+                        Outgoing::Subscribe(_) => {},
+                        Outgoing::Unsubscribe(_) => {},
+                        Outgoing::PubAck(_) => {},
+                        Outgoing::PubRec(_) => {},
+                        Outgoing::PubRel(_) => {},
+                        Outgoing::PubComp(_) => {},
+                        Outgoing::PingReq => {},
+                        Outgoing::PingResp => {},
+                        Outgoing::Disconnect => {},
+                        Outgoing::AwaitAck(_) => {},
+                    },
+                }
+               
+                self.packets.push(event_c);
+            }
+            FromClient::PublishReslt(result) => {
+                println!("pub result: {:#?}", result);
+            }
+        }
+    
+    }
+
     pub fn subscribe(&mut self, subcribe: Subcribe) {
         if let Some(tx) = &self.publish_tx {
             let _ = tx.try_send(ToClient::Subscribe((subcribe.topic.clone(), subcribe.qos)));
@@ -68,6 +124,7 @@ impl Client {
         .show(ui, |ui| {
             ui.set_width(ui.available_width());
             ui.horizontal(|ui| {
+                ui.add(StatusLed::new(&self.connected));
                 let cli_id = Label::new(RichText::new(client_id).color(title_color));
 
                 ui.add(cli_id);

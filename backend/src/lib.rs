@@ -54,7 +54,6 @@ impl Backend {
                                             cli_id,
                                             outgoing_tx,
                                         )).await;  
-                                        println!("{:?}",res);
                                         mqtt_client::new(incomming_tx, outgoing_rx, opt.convert())
                                             .await;
 
@@ -68,8 +67,9 @@ impl Backend {
 
                             rt.spawn(async move {
                                 loop {
-                                    while let Ok((client_id, clientMsg)) = incomming_rx.try_recv() {
-                                        let _ = tx.try_send(ToFrontend::ClientMsg(client_id, clientMsg));
+                                    while let Ok((client_id, client_msg)) = incomming_rx.try_recv() {
+                                        let _ = tx.try_send(ToFrontend::ClientMsg(client_id, client_msg));
+                                        
                                     }
                                 }
                             });
@@ -79,7 +79,7 @@ impl Backend {
                         ToBackend::Startup => todo!(),
                      
                     }
-                    //  self.egui_context.request_repaint();
+                 
                 }
                 Err(error) => {
                     // As the only reason this will error out is if the channel is closed (sender is dropped) a one time log of the error is enough

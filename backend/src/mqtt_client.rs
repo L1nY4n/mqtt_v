@@ -34,10 +34,11 @@ pub async fn new(
                     let _ = client_tx.try_subscribe(topic, qos);
                 }
                 ToClient::Connect => {
-                    // todo stop eventloop poll
+                 
                 }
                 ToClient::Disconnect => {
                     let _ = client_tx.try_disconnect();
+                    
                 }
                 ToClient::Unsubscribe(topic) => {
                     let _ = client_tx.try_unsubscribe(topic);
@@ -47,7 +48,8 @@ pub async fn new(
     });
 
     loop {
-        while let Ok(notification) = eventloop.poll().await {
+           match eventloop.poll().await {
+            Ok(notification) => {
             let event_clone = notification.clone();
             let event_msg = (client_id2.clone(), FromClient::Event(event_clone));
             let _ = sender2.try_send(event_msg);
@@ -56,17 +58,22 @@ pub async fn new(
                     //  println!("Incoming  {:?}", packet);
                     match packet {
                         Packet::ConnAck(_) => {
-                            println!("ConnAck  {:?}", packet);
+                          //  println!("ConnAck  {:?}", packet);
                         }
                         _ => {
-                            println!("inComming  {:?}", packet);
+                           // println!("inComming  {:?}", packet);
                         }
                     }
                 }
                 Event::Outgoing(p) => {
-                    println!("Outgoing  {:?}", p);
+                  //  println!("Outgoing  {:?}", p);
                 }
             }
+        }
+            Err(e) => {
+                let _ = e;
+              //  println!("{:}",e)
+            },
         }
     }
 }

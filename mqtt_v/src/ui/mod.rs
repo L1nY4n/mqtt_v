@@ -2,6 +2,7 @@ use backend::{
     message::{Event, MqttOpts, OptionsV3},
     Backend,
 };
+use chrono::Duration;
 use eframe::{
     egui::{
         menu, style::Margin, Button, CentralPanel, Checkbox, Context, DragValue, Frame, Id,
@@ -80,7 +81,7 @@ impl MqttAppUI {
             Backend::new(back_tx, front_rx, frame_clone).init();
         });
         let clients = HashMap::with_capacity(100);
-        MqttAppUI {
+    let   s =   MqttAppUI {
             front_tx,
             back_rx,
             state: State::default(),
@@ -88,14 +89,16 @@ impl MqttAppUI {
             clients: clients,
             style: docking::Style::default(),
             tree: None,
-        }
+        };
+      
+        s
     }
 }
 
 impl eframe::App for MqttAppUI {
     fn update(&mut self, ctx: &eframe::egui::Context, frame: &mut eframe::Frame) {
-        ctx.request_repaint();
-        self.handle_backend_msg(ctx);
+       ctx.request_repaint();
+       
         self.render_side_panel(ctx);
         self.render_central_panel(ctx);
     }
@@ -108,17 +111,7 @@ impl MqttAppUI {
                 match msg {
                     ToFrontend::ClientMsg(client_id, msg) => {
                         if let Some(client) = self.clients.get_mut(&client_id) {
-                            match msg {
-                                backend::message::FromClient::Event(event) => {
-                                  
-
-                                    client.packets.push(event);
-                                    client.recv += 1;
-                                }
-                                backend::message::FromClient::PublishReslt(result) => {
-                                    println!("pub result: {:#?}", result);
-                                }
-                            }
+                            client.handle_msg(msg)
                         }
                     }
                     ToFrontend::ClientCreated(client_id, tx) => {
