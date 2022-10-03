@@ -20,15 +20,15 @@ jobs:
           - name: linux
             os: ubuntu-latest
             artifact_name: target/release/mqtt_v
-            asset_name: mCubed-linux
+            asset_name: mqtt_v-linux
           - name: windows
             os: windows-latest
             artifact_name: target/release/mqtt_v.exe
-            asset_name: mCubed-windows
+            asset_name: mqtt_v-windows
           - name: macos
             os: macos-latest
             artifact_name: target/release/mqtt_v
-            asset_name: mCubed-macos
+            asset_name: mqtt_v-macos
 
     steps:
       - uses: actions/cache@v2
