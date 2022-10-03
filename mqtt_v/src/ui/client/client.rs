@@ -1,5 +1,5 @@
 use backend::message::{
-    Event, FromClient, MqttOpts, Packet, QoS, ToBackend, ToClient, Topic, Outgoing,
+    Event, FromClient, MqttOpts, Outgoing, Packet, QoS, ToBackend, ToClient, Topic,
 };
 use eframe::{
     egui::{style::Margin, CursorIcon, Frame, Label, Layout, RichText, Sense, Ui},
@@ -8,7 +8,7 @@ use eframe::{
 };
 use tokio::sync::mpsc::Sender;
 
-use crate::ui::{THEME, widgets::status_led::StatusLed};
+use crate::ui::{widgets::status_led::StatusLed, THEME};
 
 pub struct Client {
     pub connected: bool,
@@ -45,50 +45,47 @@ impl Client {
                 let event_c = event.clone();
                 match event {
                     Event::Incoming(income) => match income {
-                        Packet::Connect(_) => {},
+                        Packet::Connect(_) => {}
                         Packet::ConnAck(_) => {
-                            self.connected =true;
-                        },
+                            self.connected = true;
+                        }
                         Packet::Publish(_p) => {
-                           
                             self.recv += 1;
-                        },
-                        Packet::PubAck(_) => {},
-                        Packet::PubRec(_) => {},
-                        Packet::PubRel(_) => {},
-                        Packet::PubComp(_) => {},
-                        Packet::Subscribe(_) => {},
-                        Packet::SubAck(_) => {},
-                        Packet::Unsubscribe(_) => {},
-                        Packet::UnsubAck(_) => {},
-                        Packet::PingReq => {},
-                        Packet::PingResp => {},
-                        Packet::Disconnect => {
-                            self.connected=false
-                        },
+                        }
+                        Packet::PubAck(_) => {}
+                        Packet::PubRec(_) => {}
+                        Packet::PubRel(_) => {}
+                        Packet::PubComp(_) => {}
+                        Packet::Subscribe(_) => {}
+                        Packet::SubAck(_) => {}
+                        Packet::Unsubscribe(_) => {}
+                        Packet::UnsubAck(_) => {}
+                        Packet::PingReq => {}
+                        Packet::PingResp => {}
+                        Packet::Disconnect => self.connected = false,
                     },
                     Event::Outgoing(outgoing) => match outgoing {
-                        Outgoing::Publish(_) => {},
-                        Outgoing::Subscribe(_) => {},
-                        Outgoing::Unsubscribe(_) => {},
-                        Outgoing::PubAck(_) => {},
-                        Outgoing::PubRec(_) => {},
-                        Outgoing::PubRel(_) => {},
-                        Outgoing::PubComp(_) => {},
-                        Outgoing::PingReq => {},
-                        Outgoing::PingResp => {},
-                        Outgoing::Disconnect => {},
-                        Outgoing::AwaitAck(_) => {},
+                        Outgoing::Publish(_) => {}
+                        Outgoing::Subscribe(_) => {}
+                        Outgoing::Unsubscribe(_) => {}
+                        Outgoing::PubAck(_) => {}
+                        Outgoing::PubRec(_) => {}
+                        Outgoing::PubRel(_) => {}
+                        Outgoing::PubComp(_) => {}
+                        Outgoing::PingReq => {}
+                        Outgoing::PingResp => {}
+                        Outgoing::Disconnect => {}
+                        Outgoing::AwaitAck(_) => {}
                     },
                 }
-               
+
                 self.packets.push(event_c);
             }
             FromClient::PublishReslt(result) => {
                 println!("pub result: {:#?}", result);
             }
+            FromClient::Disconnected => self.connected = false,
         }
-    
     }
 
     pub fn subscribe(&mut self, subcribe: Subcribe) {
@@ -109,7 +106,14 @@ impl Client {
 }
 
 impl Client {
-    pub fn show(&self, ui: &mut Ui, client_id: &str, active: bool, on_click: impl FnOnce()) {
+    pub fn show(
+        &mut self,
+        ui: &mut Ui,
+        client_id: &str,
+        active: bool,
+        front_tx: Sender<ToBackend>,
+        on_click: impl FnOnce(),
+    ) {
         let (title_color, bg) = if active {
             (Color32::LIGHT_BLUE, Color32::BLACK)
         } else {
@@ -129,25 +133,25 @@ impl Client {
 
                 ui.add(cli_id);
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if ui
-                        .button(RichText::new("⚙").color(Color32::LIGHT_BLUE))
-                        .clicked()
-                    {}
+                    if self.connected {
+                        let disconn_btn = ui.button(RichText::new("🚫").color(Color32::LIGHT_RED));
+                        if disconn_btn.clicked() {
+                            if let Some(tx) = &self.publish_tx {
+                                let _ = tx.try_send(ToClient::Disconnect);
+                            }
+                        }
+                    } else {
+                        let conn_btn = ui.button(RichText::new("⚡").color(Color32::YELLOW));
+                        if conn_btn.clicked() {
+                            let _ = front_tx.try_send(ToBackend::NewClient(self.options.clone()));
+                        }
+                    }
                 });
             });
 
             ui.horizontal(|ui| {
                 ui.label("recv: ");
                 ui.colored_label(Color32::YELLOW, self.recv.to_string());
-                if ui
-                    .button(RichText::new("🚫").color(Color32::LIGHT_RED))
-                    .clicked()
-                {
-                    if let Some(tx) = &self.publish_tx {
-                        // tx.try_send(ToClient::Disconnect(("#".to_owned(),QoS::AtMostOnce)));
-                        tx.try_send(ToClient::Disconnect);
-                    }
-                }
             });
         });
         let response = client_frame.response;

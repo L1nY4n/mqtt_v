@@ -156,13 +156,13 @@ impl MqttAppUI {
                 if self.state.show_add {
                     self.render_add_client(ctx)
                 }
-                for (k, v) in &self.clients {
+                for (k, v) in &mut self.clients {
                     let active = if let Some(s) = &self.state.active_client {
                         s == k
                     } else {
                         false
                     };
-                    v.show(ui, k, active, || {
+                    v.show(ui, k, active,self.front_tx.clone() ,|| {
                         self.state.active_client = Some(k.to_string())
                     });
                     ui.add_space(3.0);

@@ -56,6 +56,7 @@ pub type Topic = String;
 
 #[derive(Debug)]
 pub enum FromClient {
+    Disconnected,
     Event(Event),
     PublishReslt(Result<(), ClientError>),
 }

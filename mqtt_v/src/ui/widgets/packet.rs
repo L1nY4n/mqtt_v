@@ -1,3 +1,5 @@
+
+
 use backend::message::{Event, Outgoing, Packet};
 use eframe::{
     egui::{self, style::Margin, Frame, Layout, Ui},
@@ -126,8 +128,18 @@ fn render_incomming(ui: &mut Ui, packet: Packet) {
         
         }
         // Packet::Disconnect => todo!(),
-        _ => {
-            
+        p => {
+            ui.horizontal(|ui| {
+                ui.set_width(100.0);
+                Frame {
+                    fill: Color32::BLACK,
+                    inner_margin: Margin::same(6.0),
+                    ..Frame::default()
+                }
+                .show(ui, |ui| {
+                    ui.colored_label(Color32::GREEN, format!("{:#?}",p));
+                });
+            });
         }
     }
 }
@@ -181,8 +193,18 @@ fn render_outgoing(ui: & mut Ui,outgoing: Outgoing){
         // Outgoing::PingResp => todo!(),
         // Outgoing::Disconnect => todo!(),
         // Outgoing::AwaitAck(_) => todo!(),
-        _ => {
-
+        p=> {
+            ui.horizontal(|ui| {
+                ui.set_width(100.0);
+                Frame {
+                    fill: Color32::BLACK,
+                    inner_margin: Margin::same(6.0),
+                    ..Frame::default()
+                }
+                .show(ui, |ui| {
+                    ui.colored_label(Color32::GREEN, format!("{:#?}",p));
+                });
+            });
         }
     }
 }

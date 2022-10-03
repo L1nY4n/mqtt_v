@@ -18,7 +18,6 @@ pub async fn new(
 
     std::thread::spawn(move || {
         let mut disconnect_flag = false;
-
         while !disconnect_flag {
             while let Ok(msg) = receiver.try_recv() {
                 match msg {
@@ -55,6 +54,8 @@ pub async fn new(
     loop {
         tokio::select! {
             _ = (&mut rx) =>{
+            let    disconnect_msg =  (client_id2.clone(), FromClient::Disconnected);
+                let _ = sender2.try_send(disconnect_msg);
                 break;
          },
           msg = eventloop.poll()=>{
