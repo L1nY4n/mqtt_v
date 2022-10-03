@@ -1,11 +1,11 @@
-use backend::message::{Publish, QoS, ToBackend};
+use backend::message::{Publish, QoS};
 use eframe::{
-    egui::{self, style::Margin, Layout, RadioButton, ScrollArea, TextEdit},
+    egui::{self, style::Margin, Layout, TextEdit},
     emath::Align,
     epaint::Color32,
 };
 
-use crate::ui::widgets::{docking, packet::PacketUI};
+use crate::ui::widgets::{docking};
 
 use super::client::Client;
 
@@ -29,7 +29,7 @@ impl PubulishTab {
 
 impl docking::Tab<Client> for PubulishTab {
     fn title(&self) -> &str {
-        &"publish"
+        "publish"
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, client: &mut Client) {

@@ -29,7 +29,7 @@ struct Direct {
     received: bool,
 }
 impl Filter {
-    fn filter(&self, event: &Event) -> bool {
+    fn filter(&self, _event: &Event) -> bool {
         true
     }
 }
@@ -91,7 +91,7 @@ impl docking::Tab<Client> for ChatTab {
                                                             .show(ui, |ui| {
                                                                 ui.horizontal(|ui| {
                                                                     let topic_c = topic.clone();
-                                                                    let color_c = color.clone();
+                                                                    let color_c = color;
                                                                     ui.label(
                                                                         RichText::new(topic)
                                                                             .color(color_c),

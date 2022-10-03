@@ -1,13 +1,9 @@
-use backend::{
-    message::{Event, MqttOpts, OptionsV3},
-    Backend,
-};
-use chrono::Duration;
+use backend::{message::MqttOpts, Backend};
+
 use eframe::{
     egui::{
-        menu, style::Margin, Button, CentralPanel, Checkbox, Context, DragValue, Frame, Id,
-        InnerResponse, Label, LayerId, Layout, RichText, ScrollArea, SidePanel, Slider, TextEdit,
-        TextStyle, TopBottomPanel, Ui, Window,
+        menu, Button, CentralPanel, Checkbox, Context, DragValue, Frame, Id, InnerResponse, Label,
+        LayerId, Layout, RichText, SidePanel, Slider, TextEdit, TextStyle, Ui, Window,
     },
     emath::{Align, Align2},
     epaint::{
@@ -23,10 +19,7 @@ use tokio::sync::mpsc::{Receiver, Sender};
 use self::{
     app_theme::AppTheme,
     client::publish_tab,
-    widgets::{
-        docking::{self, NodeIndex},
-        packet::PacketUI,
-    },
+    widgets::docking::{self, NodeIndex},
 };
 
 mod app_theme;
@@ -55,20 +48,11 @@ pub struct MqttAppUI {
     tree: Option<docking::Tree<Client>>,
 }
 
+#[derive(Default)]
 struct State {
     show_add: bool,
     mqtt_options: MqttOpts,
     active_client: Option<ClientId>,
-}
-
-impl Default for State {
-    fn default() -> Self {
-        Self {
-            show_add: Default::default(),
-            active_client: None,
-            mqtt_options: Default::default()
-        }
-    }
 }
 
 impl MqttAppUI {
@@ -81,31 +65,30 @@ impl MqttAppUI {
             Backend::new(back_tx, front_rx, frame_clone).init();
         });
         let clients = HashMap::with_capacity(100);
-    let   s =   MqttAppUI {
+
+        MqttAppUI {
             front_tx,
             back_rx,
             state: State::default(),
             filter: "".to_owned(),
-            clients: clients,
+            clients,
             style: docking::Style::default(),
             tree: None,
-        };
-      
-        s
+        }
     }
 }
 
 impl eframe::App for MqttAppUI {
-    fn update(&mut self, ctx: &eframe::egui::Context, frame: &mut eframe::Frame) {
-       ctx.request_repaint();
-       
+    fn update(&mut self, ctx: &eframe::egui::Context, _frame: &mut eframe::Frame) {
+        ctx.request_repaint();
+        self.handle_backend_msg(ctx);
         self.render_side_panel(ctx);
         self.render_central_panel(ctx);
     }
 }
 
 impl MqttAppUI {
-    fn handle_backend_msg(&mut self, ctx: &Context) {
+    fn handle_backend_msg(&mut self, _ctx: &Context) {
         match self.back_rx.try_recv() {
             Ok(msg) => {
                 match msg {
@@ -144,7 +127,7 @@ impl MqttAppUI {
             .show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = THEME.spacing.widget_spacing;
                 menu::bar(ui, |ui| {
-                    ui.with_layout(Layout::left_to_right(Align::Center), |ui|{
+                    ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
                         ui.add(Label::new(RichText::new("Connections")));
                     });
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -162,7 +145,7 @@ impl MqttAppUI {
                             let publish_tab = Box::new(publish_tab::PubulishTab::new());
                             let mut tree = docking::Tree::new(vec![event_tab, tree_tab]);
 
-                            let [a, b] =
+                            let [_a, _b] =
                                 tree.split_below(NodeIndex::root(), 0.75, vec![publish_tab]);
 
                             self.tree = Some(tree)
@@ -192,7 +175,7 @@ impl MqttAppUI {
             //  ui.set_height(ui.available_height());
             if let Some(active) = &self.state.active_client {
                 if let Some(tree) = &mut self.tree {
-                    let mut client = self.clients.get_mut(active).unwrap();
+                    let client = self.clients.get_mut(active).unwrap();
                     self.style = docking::Style::from_egui(ctx.style().as_ref());
 
                     let id = Id::new("mqtt_docking");
@@ -201,7 +184,7 @@ impl MqttAppUI {
                     let clip_rect = ui.clip_rect();
 
                     let mut ui = Ui::new(ctx.clone(), layer_id, id, max_rect, clip_rect);
-                    docking::show(&mut ui, id, &self.style, tree, &mut client)
+                    docking::show(&mut ui, id, &self.style, tree, client)
                 }
 
                 // ScrollArea::vertical()

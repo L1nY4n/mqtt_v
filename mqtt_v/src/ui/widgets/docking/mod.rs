@@ -218,7 +218,7 @@ pub fn show<Context>(
                     hover_data = ui.input().pointer.hover_pos().map(|pointer| HoverData {
                         rect,
                         dst: tree_index,
-                        tabs: tabs_response.hovered().then(|| tabs_response.rect),
+                        tabs: tabs_response.hovered().then_some(tabs_response.rect),
                         pointer,
                     });
                 }

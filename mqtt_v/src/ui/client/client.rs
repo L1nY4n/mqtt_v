@@ -1,5 +1,5 @@
 use backend::message::{
-    Event, FromClient, MqttOpts, Packet, Publish, QoS, ToBackend, ToClient, Topic, Outgoing,
+    Event, FromClient, MqttOpts, Packet, QoS, ToBackend, ToClient, Topic, Outgoing,
 };
 use eframe::{
     egui::{style::Margin, CursorIcon, Frame, Label, Layout, RichText, Sense, Ui},
@@ -49,7 +49,7 @@ impl Client {
                         Packet::ConnAck(_) => {
                             self.connected =true;
                         },
-                        Packet::Publish(p) => {
+                        Packet::Publish(_p) => {
                            
                             self.recv += 1;
                         },

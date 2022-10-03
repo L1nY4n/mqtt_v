@@ -1,4 +1,4 @@
-use eframe::egui::{self, ScrollArea};
+use eframe::egui::{self};
 
 use crate::ui::widgets::docking;
 
@@ -24,8 +24,8 @@ impl docking::Tab<Client> for TreeView {
         &self.title
     }
 
-    fn ui(&mut self, ui: &mut egui::Ui, client: &mut Client) {
-        ui.push_id("tree_view", |ui|{
+    fn ui(&mut self, ui: &mut egui::Ui, _client: &mut Client) {
+        ui.push_id("tree_view", |_ui|{
    
         });
     }

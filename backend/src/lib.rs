@@ -1,5 +1,5 @@
 use message::{ToBackend, ToFrontend};
-use tracing::{debug, info};
+use tracing::{info};
 pub mod message;
 pub mod mqtt_client;
 use tokio::{
@@ -7,7 +7,7 @@ use tokio::{
     sync::mpsc::{Receiver, Sender},
 };
 
-use crate::message::FromClient;
+
 pub struct Backend {
     back_tx: Sender<ToFrontend>,
     front_rx: Receiver<ToBackend>,
@@ -50,7 +50,7 @@ impl Backend {
                                 match opts {
                                     message::MqttOpts::V3(opt) => {
                                         let cli_id = opt.client_id.clone();
-                                              let res =    back_tx.send(ToFrontend::ClientCreated(
+                                              let _res =    back_tx.send(ToFrontend::ClientCreated(
                                             cli_id,
                                             outgoing_tx,
                                         )).await;  
@@ -81,7 +81,7 @@ impl Backend {
                     }
                  
                 }
-                Err(error) => {
+                Err(_error) => {
                     // As the only reason this will error out is if the channel is closed (sender is dropped) a one time log of the error is enough
                     // LOG_CHANNEL_CLOSED.call_once(|| {
                     //     error!(%error, "There was an error when receiving a message from the frontend:");
