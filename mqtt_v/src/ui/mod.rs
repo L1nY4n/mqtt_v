@@ -13,7 +13,7 @@ use eframe::{
     CreationContext,
 };
 use once_cell::sync::Lazy;
-use std::thread;
+use std::{borrow::Borrow, thread};
 use tokio::sync::mpsc::{Receiver, Sender};
 
 use self::{
@@ -23,7 +23,6 @@ use self::{
 };
 
 mod app_theme;
-
 mod client;
 mod widgets;
 
@@ -57,24 +56,48 @@ struct State {
 
 impl MqttAppUI {
     pub fn new(cc: &CreationContext) -> Self {
-        let (front_tx, front_rx) = tokio::sync::mpsc::channel(100);
-        let (back_tx, back_rx) = tokio::sync::mpsc::channel(100);
-
-        let frame_clone = cc.egui_ctx.clone();
+        let (front_tx, front_rx) = tokio::sync::mpsc::channel(2);
+        let (back_tx, back_rx) = tokio::sync::mpsc::channel(10);
         thread::spawn(move || {
-            Backend::new(back_tx, front_rx, frame_clone).init();
+            Backend::new(back_tx, front_rx).init();
         });
+
+        let event_tab = Box::new(chat_tab::ChatTab::new());
+        let tree_tab = Box::new(tree_tab::TreeView::new("Tree"));
+        let publish_tab = Box::new(publish_tab::PubulishTab::new());
+        let mut tree = docking::Tree::new(vec![event_tab, tree_tab]);
+
+        let [_a, _b] = tree.split_below(NodeIndex::root(), 0.75, vec![publish_tab]);
+
         let clients = HashMap::with_capacity(100);
 
-        MqttAppUI {
+        let mut app = MqttAppUI {
             front_tx,
             back_rx,
             state: State::default(),
             filter: "".to_owned(),
             clients,
             style: docking::Style::default(),
-            tree: None,
+            tree: Some(tree),
+        };
+        // load storage
+        if let Some(storage) = cc.storage {
+            if let Some(client_opts_list) =
+                eframe::get_value::<Vec<MqttOpts>>(storage, eframe::APP_KEY)
+            {
+                if client_opts_list.len() > 0 {
+                    client_opts_list.iter().for_each(|opts| {
+                        let key = opts.client_id();
+                        let client =
+                            client::client::create_client(opts.clone(), app.front_tx.clone());
+                        app.clients.insert(key, client);
+                    });
+                    app.state.active_client = Some(client_opts_list[0].client_id())
+                }
+            }
         }
+
+        app
     }
 }
 
@@ -84,6 +107,15 @@ impl eframe::App for MqttAppUI {
         self.handle_backend_msg(ctx);
         self.render_side_panel(ctx);
         self.render_central_panel(ctx);
+    }
+
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        let connect_opts: Vec<MqttOpts> = self
+            .clients
+            .iter()
+            .map(|(_, v)| v.options.clone())
+            .collect();
+        eframe::set_value(storage, eframe::APP_KEY, &connect_opts);
     }
 }
 
@@ -140,15 +172,6 @@ impl MqttAppUI {
 
                         if config_btn.clicked() {
                             self.state.show_add = !self.state.show_add;
-                            let event_tab = Box::new(chat_tab::ChatTab::new());
-                            let tree_tab = Box::new(tree_tab::TreeView::new("Tree"));
-                            let publish_tab = Box::new(publish_tab::PubulishTab::new());
-                            let mut tree = docking::Tree::new(vec![event_tab, tree_tab]);
-
-                            let [_a, _b] =
-                                tree.split_below(NodeIndex::root(), 0.75, vec![publish_tab]);
-
-                            self.tree = Some(tree)
                         }
                     });
                 });
@@ -162,10 +185,14 @@ impl MqttAppUI {
                     } else {
                         false
                     };
-                    v.show(ui, k, active,self.front_tx.clone() ,|| {
-                        self.state.active_client = Some(k.to_string())
-                    });
-                    ui.add_space(3.0);
+
+                    let on_click = || self.state.active_client = Some(k.to_string());
+                    let opts = v.options.clone();
+                    let on_dbclick = || {
+                        self.state.mqtt_options = opts;
+                        self.state.show_add = true;
+                    };
+                    v.show(ui, k, active, self.front_tx.clone(), on_click, on_dbclick);
                 }
             })
     }
@@ -186,15 +213,6 @@ impl MqttAppUI {
                     let mut ui = Ui::new(ctx.clone(), layer_id, id, max_rect, clip_rect);
                     docking::show(&mut ui, id, &self.style, tree, client)
                 }
-
-                // ScrollArea::vertical()
-                //     .stick_to_bottom(true)
-                //    // .max_width(ui.available_width())
-                //     .show(ui, |ui| {
-                //         for pkt in &client.packets {
-                //             PacketUI::new(pkt.clone()).show(ui)
-                //         }
-                //     });
             } else {
                 ui.centered_and_justified(|ui| {
                     ui.label("no active selected");
@@ -224,7 +242,6 @@ impl MqttAppUI {
                             self.state.show_add = false;
                         }
                     });
-                    //    ui.add_sized(Vec2::new(120.0, ui.available_height()), Label::new("add client"));
                 });
                 ui.separator();
 
@@ -251,6 +268,7 @@ impl MqttAppUI {
                             ui.add(port_widget);
                         });
                         ui.separator();
+
                         ui.horizontal(|ui| {
                             ui.add(Checkbox::new(&mut v3.keep_alive, "keep_alive"));
 
@@ -258,6 +276,31 @@ impl MqttAppUI {
                                 ui.separator();
                                 ui.add(Slider::new(&mut v3.heatbbeat, 5..=30).suffix("s"));
                             }
+                        });
+                        ui.credentialsseparator();
+                        ui.group(|ui| {
+                            if ui.selectable_label(v3.credentials, "").clicked() {
+                                v3.credentials = !v3.credentials
+                            }
+                            if v3.credentials {
+                                ui.label("username");
+                                ui.add(TextEdit::singleline(&mut v3.username));
+                                ui.label("password");
+                                ui.add(TextEdit::singleline(&mut v3.password).password(true));
+                            }
+                        });
+                        ui.group(|ui| {
+                            ui.label("max packet size");
+                            ui.label("incoming");
+                            ui.add(
+                                Slider::new(&mut v3.max_packet_size.0, 5..=u16::MAX)
+                                    .suffix(" bytes"),
+                            );
+                            ui.label("outgoing");
+                            ui.add(
+                                Slider::new(&mut v3.max_packet_size.1, 5..=u16::MAX)
+                                    .suffix(" bytes"),
+                            );
                         });
                         ui.end_row();
                         ui.add(Checkbox::new(&mut v3.clean_session, "clean_session"));
@@ -275,12 +318,16 @@ impl MqttAppUI {
                                     self.state.mqtt_options.clone(),
                                     self.front_tx.clone(),
                                 );
+                                let key1 = key.clone();
                                 self.clients.insert(key, client);
                                 self.state.show_add = false;
+                                if self.state.active_client.is_none() {
+                                    self.state.active_client = Some(key1);
+                                }
                             }
                         });
                     }
-                    MqttOpts::V5() => todo!(),
+                    MqttOpts::V5(_v5) => todo!(),
                 };
             });
         });

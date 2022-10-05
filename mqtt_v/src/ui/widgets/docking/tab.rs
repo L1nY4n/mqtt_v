@@ -1,5 +1,5 @@
-use std::any::Any;
 use eframe::egui;
+use std::any::Any;
 pub trait Tab<Context>: Send + Sync + TabDowncast {
     fn title(&self) -> &str;
     fn ui(&mut self, ui: &mut egui::Ui, ctx: &mut Context);

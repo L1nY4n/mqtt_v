@@ -5,7 +5,7 @@ use eframe::{
     epaint::Color32,
 };
 
-use crate::ui::widgets::{docking};
+use crate::ui::widgets::docking;
 
 use super::client::Client;
 
@@ -54,7 +54,7 @@ impl docking::Tab<Client> for PubulishTab {
                             });
                             ui.group(|ui| {
                                 let w = ui.available_width() - 48.0;
-                                let  topic_edit_w = if w > 0.0 { w } else { 20.0 };
+                                let topic_edit_w = if w > 0.0 { w } else { 20.0 };
 
                                 ui.add(
                                     TextEdit::singleline(&mut self.topic)
@@ -77,7 +77,8 @@ impl docking::Tab<Client> for PubulishTab {
                                     );
                                     publish.retain = self.retain;
                                     println!("{:?}", publish);
-                                    let res = tx.try_send(backend::message::ToClient::Publish(publish));
+                                    let res =
+                                        tx.try_send(backend::message::ToClient::Publish(publish));
                                     println!("{:?}", res);
                                 } else {
                                     println!("no tx")
@@ -87,10 +88,7 @@ impl docking::Tab<Client> for PubulishTab {
                         ui.group(|ui| {
                             ui.add(
                                 egui::TextEdit::multiline(&mut self.payload)
-                                 
                                     .code_editor()
-                                
-                                    
                                     .desired_width(f32::INFINITY),
                             );
                         });

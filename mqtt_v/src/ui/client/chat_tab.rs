@@ -49,7 +49,7 @@ impl ChatTab {
 
 impl docking::Tab<Client> for ChatTab {
     fn title(&self) -> &str {
-        "   Event"
+        "📺   Event"
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, client: &mut Client) {
@@ -63,10 +63,6 @@ impl docking::Tab<Client> for ChatTab {
                     ui.horizontal(|ui| {
                         ui.set_width(ui.available_width());
                         ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                            // let sub_label = ui.add(Label::new(
-                            //     RichText::new("📝").text_style(egui::TextStyle::Body),
-                            // ));
-
                             let frame = egui::Frame::default();
                             frame.fill(Color32::BLACK).show(ui, |ui| {
                                 let icon = text::LayoutJob::simple_singleline(
@@ -144,6 +140,9 @@ impl docking::Tab<Client> for ChatTab {
                         });
 
                         ui.with_layout(Layout::right_to_left(Align::Min), |ui| {
+                            if ui.button(RichText::new("🗑").color(Color32::RED)).clicked() {
+                                client.packets.clear();
+                            };
                             if ui
                                 .selectable_label(self.filter.direct.published, "published")
                                 .clicked()

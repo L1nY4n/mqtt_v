@@ -1,5 +1,3 @@
-
-
 pub fn enable_tracing() {
     use tracing_subscriber::{fmt, EnvFilter};
 

@@ -1,9 +1,6 @@
-use eframe::egui::{ Response, Sense, Ui, Widget};
-use eframe::emath::{Vec2, lerp};
-use eframe::epaint::{Stroke, Color32, Rgba};
-
-
-
+use eframe::egui::{Response, Sense, Ui, Widget};
+use eframe::emath::{lerp, Vec2};
+use eframe::epaint::{Color32, Rgba, Stroke};
 
 pub struct StatusLed {
     value: bool,
@@ -28,16 +25,12 @@ impl Widget for StatusLed {
         let (rect, response) = ui.allocate_exact_size(desired_size, Sense::hover());
 
         if ui.is_rect_visible(rect) {
-            let end = if self.value {1.0
-            }else{
-              0.0
+            let end = if self.value { 1.0 } else { 0.0 };
+            let v = if self.animated {
+                ui.ctx().animate_value_with_time(response.id, end, 0.2)
+            } else {
+                end
             };
-            let v =    if self.animated {
-                    ui.ctx()
-                        .animate_value_with_time(response.id, end, 0.2)
-                } else {
-                    end
-                };
 
             ui.painter().rect(
                 rect,
@@ -56,8 +49,6 @@ impl Widget for StatusLed {
                 Stroke::none(),
             );
         }
-
-       
 
         response
     }

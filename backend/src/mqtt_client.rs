@@ -12,42 +12,40 @@ pub async fn new(
     let client_id2 = mqttoptions.client_id();
     let sender2 = sender.clone();
 
-    let (client, mut eventloop) = AsyncClient::new(mqttoptions, 100);
+    let (client, mut eventloop) = AsyncClient::new(mqttoptions, 10);
     let (tx, mut rx) = tokio::sync::oneshot::channel();
     let client_tx = client.clone();
 
     std::thread::spawn(move || {
-        let mut disconnect_flag = false;
-        while !disconnect_flag {
-            while let Ok(msg) = receiver.try_recv() {
-                match msg {
-                    ToClient::Publish(publish) => {
-                        let Publish {
-                            qos,
-                            retain,
-                            topic,
-                            payload,
-                            dup: _,
-                            pkid: _,
-                        } = publish;
-                        let result = client_tx.try_publish(topic, qos, retain, payload);
-                        let _ =
-                            sender.try_send((client_id.clone(), FromClient::PublishReslt(result)));
+        while let Some(msg) = receiver.blocking_recv() {
+            match msg {
+                ToClient::Publish(publish) => {
+                    let Publish {
+                        qos,
+                        retain,
+                        topic,
+                        payload,
+                        dup: _,
+                        pkid: _,
+                    } = publish;
+                    let result = client_tx.try_publish(topic, qos, retain, payload);
+                    let _ = sender.try_send((client_id.clone(), FromClient::PublishReslt(result)));
+                }
+                ToClient::Subscribe((topic, qos)) => {
+                    let _ = client_tx.try_subscribe(topic, qos);
+                }
+                ToClient::Connect => {}
+                ToClient::Disconnect => {
+                    if client_tx.try_disconnect().is_ok() {
+                        break;
                     }
-                    ToClient::Subscribe((topic, qos)) => {
-                        let _ = client_tx.try_subscribe(topic, qos);
-                    }
-                    ToClient::Connect => {}
-                    ToClient::Disconnect => {
-                        let _ = client_tx.try_disconnect();
-                        disconnect_flag = true;
-                    }
-                    ToClient::Unsubscribe(topic) => {
-                        let _ = client_tx.try_unsubscribe(topic);
-                    }
+                }
+                ToClient::Unsubscribe(topic) => {
+                    let _ = client_tx.try_unsubscribe(topic);
                 }
             }
         }
+
         tx.send(()).unwrap();
     });
 
@@ -87,6 +85,6 @@ pub async fn new(
                 }
             }
           }
-        }
+        };
     }
 }

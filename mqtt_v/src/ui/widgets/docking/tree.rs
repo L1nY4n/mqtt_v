@@ -1,8 +1,6 @@
-
 use eframe::epaint::Rect;
 
 use super::Tab;
-
 
 pub type Tabs<Context> = Vec<Box<dyn Tab<Context>>>;
 

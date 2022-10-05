@@ -6,7 +6,7 @@ use eframe::{
     emath::Align,
     epaint::Color32,
 };
-use tokio::sync::mpsc::Sender;
+use tokio::sync::mpsc::{error::TrySendError, Sender};
 
 use crate::ui::{widgets::status_led::StatusLed, THEME};
 
@@ -48,6 +48,7 @@ impl Client {
                         Packet::Connect(_) => {}
                         Packet::ConnAck(_) => {
                             self.connected = true;
+                            self.subcribe_fresh();
                         }
                         Packet::Publish(_p) => {
                             self.recv += 1;
@@ -96,6 +97,14 @@ impl Client {
         self.subscriptions.push(subcribe)
     }
 
+    fn subcribe_fresh(&mut self) {
+        for s in &self.subscriptions {
+            if let Some(tx) = &self.publish_tx {
+                let _ = tx.try_send(ToClient::Subscribe((s.topic.clone(), s.qos)));
+            }
+        }
+    }
+
     pub fn unsubscribe(&mut self, topic: Topic) {
         if let Some(tx) = &self.publish_tx {
             if let Ok(()) = tx.try_send(ToClient::Unsubscribe(topic.to_string())) {
@@ -113,6 +122,7 @@ impl Client {
         active: bool,
         front_tx: Sender<ToBackend>,
         on_click: impl FnOnce(),
+        on_dbclick: impl FnOnce(),
     ) {
         let (title_color, bg) = if active {
             (Color32::LIGHT_BLUE, Color32::BLACK)
@@ -137,7 +147,12 @@ impl Client {
                         let disconn_btn = ui.button(RichText::new("🚫").color(Color32::LIGHT_RED));
                         if disconn_btn.clicked() {
                             if let Some(tx) = &self.publish_tx {
-                                let _ = tx.try_send(ToClient::Disconnect);
+                                // channel closed
+                                if let Err(TrySendError::Closed(_)) =
+                                    tx.try_send(ToClient::Disconnect)
+                                {
+                                    self.connected = false
+                                }
                             }
                         }
                     } else {
@@ -154,13 +169,15 @@ impl Client {
                 ui.colored_label(Color32::YELLOW, self.recv.to_string());
             });
         });
-        let response = client_frame.response;
-        if response
+        let response = client_frame
+            .response
             .on_hover_cursor(CursorIcon::PointingHand)
-            .interact(Sense::click())
-            .clicked()
-        {
+            .interact(Sense::click_and_drag());
+        if response.clicked() {
             on_click();
+        }
+        if response.double_clicked() {
+            on_dbclick();
         }
     }
 }

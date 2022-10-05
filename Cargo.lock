@@ -33,6 +33,7 @@ dependencies = [
  "cfg-if",
  "getrandom",
  "once_cell",
+ "serde",
  "version_check",
 ]
 
@@ -103,6 +104,7 @@ dependencies = [
  "eframe",
  "once_cell",
  "rumqttc",
+ "serde",
  "tokio",
  "tracing",
 ]
@@ -400,6 +402,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "directories-next"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "339ee130d97a610ea5a5872d2bbb130fdf68884ff09d3028b81bec8a1ac23bbc"
+dependencies = [
+ "cfg-if",
+ "dirs-sys-next",
+]
+
+[[package]]
+name = "dirs-sys-next"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ebda144c4fe02d1f7ea1a7d9641b6fc6b580adcfa024ae48797ecdeb6825b4d"
+dependencies = [
+ "libc",
+ "redox_users",
+ "winapi",
+]
+
+[[package]]
 name = "dispatch"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -441,6 +464,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0d49426c3e72a6728b0c790d22db8bf7bbcff10d83b8b6f3a01295be982302e"
 dependencies = [
  "bytemuck",
+ "directories-next",
  "egui",
  "egui-winit",
  "egui_glow",
@@ -449,6 +473,8 @@ dependencies = [
  "glutin",
  "js-sys",
  "percent-encoding",
+ "ron",
+ "serde",
  "tracing",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -465,6 +491,8 @@ dependencies = [
  "ahash",
  "epaint",
  "nohash-hasher",
+ "ron",
+ "serde",
  "tracing",
 ]
 
@@ -477,6 +505,7 @@ dependencies = [
  "arboard",
  "egui",
  "instant",
+ "serde",
  "smithay-clipboard",
  "tracing",
  "webbrowser",
@@ -505,6 +534,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9542a40106fdba943a055f418d1746a050e1a903a049b030c2b097d4686a33cf"
 dependencies = [
  "bytemuck",
+ "serde",
 ]
 
 [[package]]
@@ -520,6 +550,7 @@ dependencies = [
  "emath",
  "nohash-hasher",
  "parking_lot",
+ "serde",
 ]
 
 [[package]]
@@ -1465,6 +1496,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "redox_users"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b033d837a7cf162d7993aded9304e30a83213c648b6e389db233191f891e5c2b"
+dependencies = [
+ "getrandom",
+ "redox_syscall",
+ "thiserror",
+]
+
+[[package]]
 name = "regex"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1501,6 +1543,17 @@ dependencies = [
  "untrusted",
  "web-sys",
  "winapi",
+]
+
+[[package]]
+name = "ron"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "300a51053b1cb55c80b7a9fde4120726ddf25ca241a1cbb926626f62fb136bff"
+dependencies = [
+ "base64",
+ "bitflags",
+ "serde",
 ]
 
 [[package]]
@@ -1654,6 +1707,9 @@ name = "serde"
 version = "1.0.144"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0f747710de3dcd43b88c9168773254e809d8ddbdf9653b84e2554ab219f17860"
+dependencies = [
+ "serde_derive",
+]
 
 [[package]]
 name = "serde_derive"
