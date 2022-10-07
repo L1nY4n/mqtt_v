@@ -13,7 +13,7 @@ use eframe::{
     CreationContext,
 };
 use once_cell::sync::Lazy;
-use std::{borrow::Borrow, thread};
+use std::{thread};
 use tokio::sync::mpsc::{Receiver, Sender};
 
 use self::{
@@ -85,7 +85,7 @@ impl MqttAppUI {
             if let Some(client_opts_list) =
                 eframe::get_value::<Vec<MqttOpts>>(storage, eframe::APP_KEY)
             {
-                if client_opts_list.len() > 0 {
+                if !client_opts_list.is_empty() {
                     client_opts_list.iter().for_each(|opts| {
                         let key = opts.client_id();
                         let client =
@@ -111,9 +111,7 @@ impl eframe::App for MqttAppUI {
 
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         let connect_opts: Vec<MqttOpts> = self
-            .clients
-            .iter()
-            .map(|(_, v)| v.options.clone())
+            .clients.values().map(|v| v.options.clone())
             .collect();
         eframe::set_value(storage, eframe::APP_KEY, &connect_opts);
     }
@@ -121,25 +119,30 @@ impl eframe::App for MqttAppUI {
 
 impl MqttAppUI {
     fn handle_backend_msg(&mut self, _ctx: &Context) {
-        match self.back_rx.try_recv() {
-            Ok(msg) => {
-                match msg {
-                    ToFrontend::ClientMsg(client_id, msg) => {
-                        if let Some(client) = self.clients.get_mut(&client_id) {
-                            client.handle_msg(msg)
+        let mut i = 100;
+        while i > 0 {
+            i -= 1;
+
+            match self.back_rx.try_recv() {
+                Ok(msg) => {
+                    match msg {
+                        ToFrontend::ClientMsg(client_id, msg) => {
+                            if let Some(client) = self.clients.get_mut(&client_id) {
+                                client.handle_msg(msg)
+                            }
+                        }
+                        ToFrontend::ClientCreated(client_id, tx) => {
+                            if let Some(client) = self.clients.get_mut(&client_id) {
+                                println!("created");
+                                client.publish_tx = Some(tx)
+                            }
                         }
                     }
-                    ToFrontend::ClientCreated(client_id, tx) => {
-                        if let Some(client) = self.clients.get_mut(&client_id) {
-                            println!("created");
-                            client.publish_tx = Some(tx)
-                        }
-                    }
+                    //  ctx.request_repaint();
                 }
-                //  ctx.request_repaint();
-            }
-            Err(err) => {
-                let _ = err;
+                Err(err) => {
+                    let _ = err;
+                }
             }
         }
     }
@@ -230,7 +233,7 @@ impl MqttAppUI {
             .vscroll(false)
             .anchor(Align2::CENTER_CENTER, [0.0, -60.0]);
         window.show(ctx, |ui| {
-            Frame::default().show(ui, |ui| {
+            Frame::none().show(ui, |ui| {
                 menu::bar(ui, |ui| {
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         let close_btn = ui.add(Button::new(
@@ -277,9 +280,9 @@ impl MqttAppUI {
                                 ui.add(Slider::new(&mut v3.heatbbeat, 5..=30).suffix("s"));
                             }
                         });
-                        ui.credentialsseparator();
+                        ui.separator();
                         ui.group(|ui| {
-                            if ui.selectable_label(v3.credentials, "").clicked() {
+                            if ui.selectable_label(v3.credentials, "credentials").clicked() {
                                 v3.credentials = !v3.credentials
                             }
                             if v3.credentials {
@@ -305,26 +308,43 @@ impl MqttAppUI {
                         ui.end_row();
                         ui.add(Checkbox::new(&mut v3.clean_session, "clean_session"));
                         ui.separator();
-                        ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
+                        ui.with_layout(Layout::left_to_right(Align::TOP), |ui| {
                             if ui
                                 .button(
-                                    RichText::new("✅")
+                                    RichText::new("➖")
                                         .text_style(TextStyle::Heading)
-                                        .color(Color32::GREEN),
+                                        .color(Color32::RED),
                                 )
                                 .clicked()
                             {
-                                let client = client::client::create_client(
-                                    self.state.mqtt_options.clone(),
-                                    self.front_tx.clone(),
-                                );
-                                let key1 = key.clone();
-                                self.clients.insert(key, client);
+                                self.clients.remove(&key);
                                 self.state.show_add = false;
-                                if self.state.active_client.is_none() {
-                                    self.state.active_client = Some(key1);
+                                if matches!(&self.state.active_client, Some(k) if  k==&key) {
+                                    self.state.active_client = None;
                                 }
                             }
+
+                            ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
+                                if ui
+                                    .button(
+                                        RichText::new("✅")
+                                            .text_style(TextStyle::Heading)
+                                            .color(Color32::GREEN),
+                                    )
+                                    .clicked()
+                                {
+                                    let client = client::client::create_client(
+                                        self.state.mqtt_options.clone(),
+                                        self.front_tx.clone(),
+                                    );
+                                    let key1 = key.clone();
+                                    self.clients.insert(key, client);
+                                    self.state.show_add = false;
+                                    if self.state.active_client.is_none() {
+                                        self.state.active_client = Some(key1);
+                                    }
+                                }
+                            });
                         });
                     }
                     MqttOpts::V5(_v5) => todo!(),

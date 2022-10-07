@@ -12,7 +12,7 @@ pub async fn new(
     let client_id2 = mqttoptions.client_id();
     let sender2 = sender.clone();
 
-    let (client, mut eventloop) = AsyncClient::new(mqttoptions, 10);
+    let (client, mut eventloop) = AsyncClient::new(mqttoptions, 100);
     let (tx, mut rx) = tokio::sync::oneshot::channel();
     let client_tx = client.clone();
 

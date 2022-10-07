@@ -47,9 +47,9 @@ impl docking::Tab<Client> for PubulishTab {
                                     self.retain = !self.retain;
                                 }
                                 ui.separator();
-                                ui.radio_value(&mut self.qos, QoS::AtMostOnce, "AtMostOnce");
-                                ui.radio_value(&mut self.qos, QoS::AtLeastOnce, "AtLeastOnce");
-                                ui.radio_value(&mut self.qos, QoS::ExactlyOnce, "ExactlyOnce");
+                                ui.radio_value(&mut self.qos, QoS::AtMostOnce, "0");
+                                ui.radio_value(&mut self.qos, QoS::AtLeastOnce, "1");
+                                ui.radio_value(&mut self.qos, QoS::ExactlyOnce, "2");
                                 ui.label("Qos:");
                             });
                             ui.group(|ui| {

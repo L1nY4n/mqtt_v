@@ -176,7 +176,7 @@ impl Client {
         if response.clicked() {
             on_click();
         }
-        if response.double_clicked() {
+        if response.secondary_clicked() {
             on_dbclick();
         }
     }
