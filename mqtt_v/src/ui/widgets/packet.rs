@@ -1,8 +1,8 @@
-use backend::message::{Event, Outgoing, Packet};
+use backend::message::{Event, Outgoing, Packet, QoS};
 use eframe::{
-    egui::{self, style::Margin, Frame, Layout, Ui},
+    egui::{self, style::Margin, Frame, Label, Layout, RichText, Ui},
     emath::Align,
-    epaint::Color32,
+    epaint::{Color32, Rounding},
 };
 
 pub struct PacketUI {
@@ -34,6 +34,7 @@ impl PacketUI {
                 }
             }
         });
+        ui.add_space(4.0);
     }
 }
 
@@ -45,22 +46,32 @@ fn render_incomming(ui: &mut Ui, packet: Packet) {
             Frame {
                 fill: Color32::BLACK,
                 inner_margin: Margin::same(6.0),
-
+                rounding: Rounding {
+                    nw: 6.0,
+                    ne: 6.0,
+                    sw: 6.0,
+                    se: 0.0,
+                },
                 ..Frame::default()
             }
             .show(ui, |ui| {
                 ui.set_max_width(400.0);
                 ui.vertical(|ui| {
                     ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                        ui.label(p.topic);
+                        ui.add(Label::new(RichText::new(p.topic).color(Color32::KHAKI)));
+
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             ui.colored_label(
                                 Color32::from_rgb(128, 140, 255),
-                                format!("{:#?}", p.qos),
+                                match p.qos {
+                                    QoS::AtMostOnce => "0",
+                                    QoS::AtLeastOnce => "1",
+                                    QoS::ExactlyOnce => "2",
+                                },
                             );
                         })
                     });
-
+                    ui.add_space(2.0);
                     if let Ok(mut x) = String::from_utf8(p.payload.to_vec()) {
                         ui.add(
                             egui::TextEdit::multiline(&mut x)

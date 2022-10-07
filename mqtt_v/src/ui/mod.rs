@@ -63,9 +63,9 @@ impl MqttAppUI {
         });
 
         let event_tab = Box::new(chat_tab::ChatTab::new());
-        let tree_tab = Box::new(tree_tab::TreeView::new("Tree"));
+        let stat_tab = Box::new(tree_tab::StatTab::new());
         let publish_tab = Box::new(publish_tab::PubulishTab::new());
-        let mut tree = docking::Tree::new(vec![event_tab, tree_tab]);
+        let mut tree = docking::Tree::new(vec![event_tab, stat_tab]);
 
         let [_a, _b] = tree.split_below(NodeIndex::root(), 0.75, vec![publish_tab]);
 

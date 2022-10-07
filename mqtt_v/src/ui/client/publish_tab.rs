@@ -29,7 +29,7 @@ impl PubulishTab {
 
 impl docking::Tab<Client> for PubulishTab {
     fn title(&self) -> &str {
-        "publish"
+        "🚀 publish"
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, client: &mut Client) {

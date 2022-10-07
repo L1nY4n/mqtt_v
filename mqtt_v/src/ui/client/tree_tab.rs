@@ -4,24 +4,24 @@ use crate::ui::widgets::docking;
 
 use super::client::Client;
 
-pub struct TreeView {
-    title: String,
+pub struct StatTab {
+  
 }
 
-impl TreeView {
-    pub fn new(title: impl ToString) -> Self {
+impl StatTab {
+    pub fn new() -> Self {
         Self {
-            title: title.to_string(),
+          
         }
     }
 }
 
-impl docking::Tab<Client> for TreeView {
+impl docking::Tab<Client> for StatTab {
     fn title(&self) -> &str {
-        &self.title
+       "📈 stat"
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, _client: &mut Client) {
-        ui.push_id("tree_view", |_ui| {});
+        ui.push_id("statistics", |_ui| {});
     }
 }
