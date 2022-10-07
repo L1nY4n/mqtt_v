@@ -10,48 +10,40 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
-jobs:
-  publish:
-    name: Publish for ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: taiki-e/create-gh-release-action@v1
+        #with:
+          # (optional)
+          #changelog: CHANGELOG.md
+        env:
+          # (required)
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  upload-assets:
     strategy:
       matrix:
-        include:
-          - name: linux
-            os: ubuntu-latest
-            artifact_name: target/release/mqtt_v
-            asset_name: mqtt_v-linux
-          - name: windows
-            os: windows-latest
-            artifact_name: target/release/mqtt_v.exe
-            asset_name: mqtt_v-windows
-          - name: macos
-            os: macos-latest
-            artifact_name: target/release/mqtt_v
-            asset_name: mqtt_v-macos
-
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Download dependencies
-        run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-           sudo apt install libxcb-shape0-dev libxcb-xfixes0-dev
-          fi
-        shell: bash
       - uses: actions/checkout@v2
-      - name: Build
-        shell: bash
-        run: cargo build --release --verbose
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+      - uses: taiki-e/upload-rust-binary-action@v1
         with:
-          name: ${{ matrix.asset_name }}
-          path: ${{ matrix.artifact_name }}
+          # (required)
+          bin: mqtt_v
+          # (optional) On which platform to distribute the `.tar.gz` file.
+          # [default value: unix]
+          # [possible values: all, unix, windows, none]
+          tar: unix
+          # (optional) On which platform to distribute the `.zip` file.
+          # [default value: windows]
+          # [possible values: all, unix, windows, none]
+          zip: windows
+        env:
+          # (required)
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
