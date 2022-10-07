@@ -10,7 +10,8 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
-create-release:
+jobs:
+  create-release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -35,7 +36,7 @@ create-release:
       - uses: taiki-e/upload-rust-binary-action@v1
         with:
           # (required)
-          bin: mqtt_v
+          bin: stock-tracker
           # (optional) On which platform to distribute the `.tar.gz` file.
           # [default value: unix]
           # [possible values: all, unix, windows, none]
