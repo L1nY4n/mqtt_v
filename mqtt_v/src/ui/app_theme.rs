@@ -17,16 +17,6 @@ pub struct AppTheme {
     pub margin: MarginSize,
 }
 
-impl AppTheme {
-    pub const fn mod_card_source(&self) -> &SourceTheme {
-        &self.colors.mod_card.source
-    }
-
-    pub const fn mod_card_modloader(&self) -> &ModloaderTheme {
-        &self.colors.mod_card.modloader
-    }
-}
-
 impl Default for AppTheme {
     fn default() -> Self {
         let colors = Colors::default();
@@ -115,7 +105,6 @@ pub struct Colors {
     pub light_gray: Color32,
     pub lighter_gray: Color32,
     pub error_message: Color32,
-    pub mod_card: ModCardTheme,
 }
 
 impl Default for Colors {
@@ -128,29 +117,6 @@ impl Default for Colors {
             light_gray: Color32::from_rgb(85, 85, 85),
             lighter_gray: Color32::from_rgb(120, 120, 120),
             error_message: Color32::from_rgb(211, 80, 80),
-            mod_card: ModCardTheme::default(),
-        }
-    }
-}
-
-pub struct ModCardTheme {
-    pub update_button: Color32,
-    pub update_button_background: Color32,
-    pub delete_button: Color32,
-    pub source: SourceTheme,
-    pub modloader: ModloaderTheme,
-    pub mod_status_icon_background: Color32,
-}
-
-impl Default for ModCardTheme {
-    fn default() -> Self {
-        Self {
-            update_button: Color32::from_rgb(198, 101, 243),
-            update_button_background: Color32::from_rgba_premultiplied(198, 101, 243, 50),
-            delete_button: Color32::from_rgb(243, 101, 101),
-            source: SourceTheme::default(),
-            modloader: ModloaderTheme::default(),
-            mod_status_icon_background: Color32::from_gray(32),
         }
     }
 }

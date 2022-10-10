@@ -4,3 +4,11 @@ members = [
     "mqtt_v",
     "backend"
 ]
+
+
+
+[profile.dev]
+split-debuginfo = "unpacked"
+
+[profile.release]
+opt-level = 3
