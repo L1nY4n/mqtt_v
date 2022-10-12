@@ -24,6 +24,6 @@ work in progress
 ## Screenshots
 
 <div align="center">
-  <img src="./screenshots/v0.1.1.png" alt="screenshot1" width="600"/>
+  <img src="./screenshots/v0.1.1.png" alt="mqttV" width="800" />
 
 </div>

@@ -1,8 +1,8 @@
 use backend::message::{Event, Outgoing, Packet, QoS};
 use eframe::{
-    egui::{self, style::Margin, Frame, Label, Layout, RichText, Ui},
+    egui::{self, style::Margin, Button, CursorIcon, Frame, Label, Layout, RichText, Ui},
     emath::Align,
-    epaint::{Color32, Rounding},
+    epaint::{Color32, FontId, Rounding},
 };
 
 pub struct PacketUI {
@@ -55,10 +55,24 @@ fn render_incomming(ui: &mut Ui, packet: Packet) {
                 ..Frame::default()
             }
             .show(ui, |ui| {
-                ui.set_max_width(400.0);
+                ui.set_max_width(ui.available_width() * 0.5);
                 ui.vertical(|ui| {
                     ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                        ui.add(Label::new(RichText::new(p.topic).color(Color32::KHAKI)));
+                        let tooltip_ui = |ui: &mut Ui| {
+                            //  ui.label(RichText::new(p.topic.clone()));
+                            ui.label(RichText::new("Click to copy"));
+                        };
+
+                        let topic_btn = ui
+                            .add(
+                                Button::new(RichText::new(p.topic.clone()).color(Color32::KHAKI))
+                                    .frame(false),
+                            )
+                            .on_hover_ui(tooltip_ui);
+
+                        if topic_btn.clicked() {
+                            ui.output().copied_text = p.topic;
+                        }
 
                         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             ui.colored_label(
