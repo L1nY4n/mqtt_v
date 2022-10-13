@@ -26,6 +26,30 @@ pub struct Subcribe {
     pub color: Color32,
 }
 
+impl Subcribe {
+    pub fn matches(&self, topic: &str) -> bool {
+        let mut topics = topic.split('/');
+        let mut filters = self.topic.split('/');
+
+        for f in filters.by_ref() {
+            if f == "#" {
+                return true;
+            }
+
+            let top = topics.next();
+            match top {
+                Some(t) if t == "#" => return false,
+                Some(_) if f == "+" => continue,
+                Some(t) if f != t => return false,
+                Some(_) => continue,
+                None => return false,
+            }
+        }
+
+        !topics.next().is_some()
+    }
+}
+
 pub fn create_client(options: MqttOpts, tx: Sender<ToBackend>) -> Client {
     let _ = tx.try_send(ToBackend::NewClient(options.clone()));
     Client {

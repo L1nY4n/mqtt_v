@@ -13,7 +13,7 @@ use eframe::{
     CreationContext,
 };
 use once_cell::sync::Lazy;
-use std::{thread};
+use std::thread;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 use self::{
@@ -110,9 +110,8 @@ impl eframe::App for MqttAppUI {
     }
 
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        let connect_opts: Vec<MqttOpts> = self
-            .clients.values().map(|v| v.options.clone())
-            .collect();
+        let connect_opts: Vec<MqttOpts> =
+            self.clients.values().map(|v| v.options.clone()).collect();
         eframe::set_value(storage, eframe::APP_KEY, &connect_opts);
     }
 }

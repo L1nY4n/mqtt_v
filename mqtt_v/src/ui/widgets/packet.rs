@@ -1,9 +1,11 @@
 use backend::message::{Event, Outgoing, Packet, QoS};
 use eframe::{
-    egui::{self, style::Margin, Button, CursorIcon, Frame, Label, Layout, RichText, Ui},
+    egui::{self, style::Margin, Frame, Layout, RichText, Sense, Ui},
     emath::Align,
-    epaint::{Color32, FontId, Rounding},
+    epaint::{Color32, Rounding},
 };
+
+use crate::ui::client::client::Subcribe;
 
 pub struct PacketUI {
     event: Event,
@@ -14,7 +16,7 @@ impl PacketUI {
         PacketUI { event: pkt }
     }
 
-    pub fn show(self, ui: &mut Ui) {
+    pub fn show(self, ui: &mut Ui, subs: &Vec<Subcribe>) {
         ui.horizontal(|ui| {
             ui.set_width(ui.available_width());
             match self.event {
@@ -22,7 +24,7 @@ impl PacketUI {
                     let layout = Layout::left_to_right(Align::Center);
                     ui.with_layout(layout, |ui| {
                         ui.set_width(ui.available_width());
-                        render_incomming(ui, packet);
+                        render_incomming(ui, packet, subs);
                     });
                 }
                 Event::Outgoing(outgoing) => {
@@ -38,7 +40,7 @@ impl PacketUI {
     }
 }
 
-fn render_incomming(ui: &mut Ui, packet: Packet) {
+fn render_incomming(ui: &mut Ui, packet: Packet, subs: &Vec<Subcribe>) {
     match packet {
         // Packet::Connect(_) => {}
         // Packet::ConnAck(_) => {}
@@ -46,31 +48,43 @@ fn render_incomming(ui: &mut Ui, packet: Packet) {
             Frame {
                 fill: Color32::BLACK,
                 inner_margin: Margin::same(6.0),
-                rounding: Rounding {
-                    nw: 6.0,
-                    ne: 6.0,
-                    sw: 6.0,
-                    se: 0.0,
-                },
+                rounding: Rounding::same(6.0),
                 ..Frame::default()
             }
             .show(ui, |ui| {
                 ui.set_max_width(ui.available_width() * 0.5);
+
                 ui.vertical(|ui| {
                     ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
                         let tooltip_ui = |ui: &mut Ui| {
-                            //  ui.label(RichText::new(p.topic.clone()));
-                            ui.label(RichText::new("Click to copy"));
+                            for s in subs.iter() {
+                                if s.matches(&p.topic) {
+                                    ui.label(RichText::new(s.topic.clone()).color(s.color));
+                                }
+                            }
+                            
+                            ui.label(RichText::new("click to copy"));
                         };
-
-                        let topic_btn = ui
-                            .add(
-                                Button::new(RichText::new(p.topic.clone()).color(Color32::KHAKI))
-                                    .frame(false),
-                            )
-                            .on_hover_ui(tooltip_ui);
-
-                        if topic_btn.clicked() {
+                        let response = ui
+                            .scope(|ui| {
+                                ui.spacing_mut().item_spacing.x = 1.0;
+                                let mut i = 0;
+                                for x in p.topic.split("/") {
+                                    if i == 0 {
+                                        if !x.is_empty() {
+                                            ui.label(RichText::new(x).color(Color32::KHAKI));
+                                        }
+                                    } else {
+                                        ui.label(RichText::new("/").color(Color32::WHITE));
+                                        ui.label(RichText::new(x).color(Color32::KHAKI));
+                                    }
+                                    i += 1;
+                                }
+                            })
+                            .response
+                            .on_hover_ui_at_pointer(tooltip_ui)
+                            .interact(Sense::click());
+                        if response.clicked() {
                             ui.output().copied_text = p.topic;
                         }
 
