@@ -2,7 +2,7 @@ use backend::message::{Event, Outgoing, Packet, QoS};
 use eframe::{
     egui::{self, style::Margin, Frame, Layout, RichText, Sense, Ui},
     emath::Align,
-    epaint::{Color32, Rounding},
+    epaint::{Color32, Rounding, Stroke, Vec2},
 };
 
 use crate::ui::client::client::Subcribe;
@@ -56,13 +56,35 @@ fn render_incomming(ui: &mut Ui, packet: Packet, subs: &Vec<Subcribe>) {
 
                 ui.vertical(|ui| {
                     ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                        let tooltip_ui = |ui: &mut Ui| {
-                            for s in subs.iter() {
-                                if s.matches(&p.topic) {
-                                    ui.label(RichText::new(s.topic.clone()).color(s.color));
-                                }
+                        let mut sub_matches = vec![];
+                        for s in subs.iter() {
+                            if s.matches(&p.topic) {
+                                sub_matches.push((s.topic.clone(), s.color));
                             }
-                            
+                        }
+                        ui.scope(|ui| {
+                            ui.spacing_mut().item_spacing = Vec2::new(2.0, 1.0);
+                            ui.horizontal_centered(|ui| {
+                                for (topic, color) in &sub_matches {
+                                    let desired_size = Vec2::new(4.0, 14.0);
+                                    let (rect, resp) =
+                                        ui.allocate_exact_size(desired_size, Sense::hover());
+                                    ui.painter().rect(
+                                        rect,
+                                        ui.style().visuals.noninteractive().rounding,
+                                        *color,
+                                        Stroke::none(),
+                                    );
+                                    resp.on_hover_text(topic);
+                                }
+                            });
+                        });
+
+                        let tooltip_ui = |ui: &mut Ui| {
+                            for (topic, color) in &sub_matches {
+                                ui.label(RichText::new(topic).color(*color));
+                            }
+
                             ui.label(RichText::new("click to copy"));
                         };
                         let response = ui
