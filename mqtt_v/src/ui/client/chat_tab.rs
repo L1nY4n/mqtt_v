@@ -70,7 +70,6 @@ impl docking::Tab<Client> for ChatTab {
                                     FontId::proportional(16.0),
                                     Color32::GREEN,
                                 );
-
                                 let InnerResponse { inner: _, response } =
                                     ui.menu_button(icon, |ui| {
                                         egui::Frame::default()
@@ -92,7 +91,11 @@ impl docking::Tab<Client> for ChatTab {
                                                                         RichText::new(topic)
                                                                             .color(color_c),
                                                                     );
-                                                                    ui.label(format!("{:?}", qos));
+                                                                    ui.label(match qos {
+                                                                        QoS::AtMostOnce => "0",
+                                                                        QoS::AtLeastOnce => "1",
+                                                                        QoS::ExactlyOnce => "2",
+                                                                    });
 
                                                                     if ui.button("ｘ").clicked() {
                                                                         client.unsubscribe(topic_c)

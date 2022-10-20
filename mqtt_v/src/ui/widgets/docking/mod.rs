@@ -1,3 +1,4 @@
+// from https://github.com/lain-dono/egui_docking
 mod tab;
 mod tree;
 
@@ -199,7 +200,6 @@ pub fn show<Context>(
                     });
                 });
 
-                // tab body
                 if let Some(tab) = tabs.get_mut(*active) {
                     let top_y = rect.min.y + height_topbar;
                     let rect = rect.intersect(Rect::everything_below(top_y));

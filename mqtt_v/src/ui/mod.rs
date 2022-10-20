@@ -2,8 +2,9 @@ use backend::{message::MqttOpts, Backend};
 
 use eframe::{
     egui::{
-        menu, Button, CentralPanel, Checkbox, Context, DragValue, Frame, Id, InnerResponse, Label,
-        LayerId, Layout, RichText, SidePanel, Slider, TextEdit, TextStyle, Ui, Window,
+        menu, Button, CentralPanel, Checkbox, Context, CursorIcon, DragValue, Frame, Id,
+        InnerResponse, Label, LayerId, Layout, RichText, SidePanel, Slider, TextEdit, TextStyle,
+        Ui, Window,
     },
     emath::{Align, Align2},
     epaint::{
@@ -50,6 +51,7 @@ pub struct MqttAppUI {
 #[derive(Default)]
 struct State {
     show_add: bool,
+    settings: bool,
     mqtt_options: MqttOpts,
     active_client: Option<ClientId>,
 }
@@ -157,7 +159,7 @@ impl MqttAppUI {
                 ..Frame::default()
             })
             .resizable(false)
-            .default_width(200.)
+            .default_width(200.0)
             .show(ctx, |ui| {
                 ui.style_mut().spacing.item_spacing = THEME.spacing.widget_spacing;
                 menu::bar(ui, |ui| {
@@ -196,6 +198,29 @@ impl MqttAppUI {
                     };
                     v.show(ui, k, active, self.front_tx.clone(), on_click, on_dbclick);
                 }
+
+                ui.with_layout(Layout::bottom_up(Align::Min), |ui| {
+                    menu::bar(ui, |ui| {
+                        // setting button
+                        let preferences_btn = ui
+                            .add(Button::new(
+                                RichText::new("⚙")
+                                    .text_style(TextStyle::Heading)
+                                    .color(Color32::YELLOW),
+                            ))
+                            .on_hover_cursor(CursorIcon::PointingHand);
+
+                        if preferences_btn.clicked() {
+                            self.state.settings = true
+                        }
+                        Window::new("🔧 Settings")
+                            .open(&mut self.state.settings)
+                            .vscroll(true)
+                            .show(ctx, |ui| {
+                                ctx.settings_ui(ui);
+                            });
+                    });
+                });
             })
     }
 
@@ -336,11 +361,10 @@ impl MqttAppUI {
                                         self.state.mqtt_options.clone(),
                                         self.front_tx.clone(),
                                     );
-                                    let key1 = key.clone();
-                                    self.clients.insert(key, client);
+                                    self.clients.insert(key.clone(), client);
                                     self.state.show_add = false;
                                     if self.state.active_client.is_none() {
-                                        self.state.active_client = Some(key1);
+                                        self.state.active_client = Some(key);
                                     }
                                 }
                             });

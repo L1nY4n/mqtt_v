@@ -46,7 +46,7 @@ impl Subcribe {
             }
         }
 
-        !topics.next().is_some()
+        topics.next().is_none()
     }
 }
 

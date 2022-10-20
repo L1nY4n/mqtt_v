@@ -91,7 +91,7 @@ fn render_incomming(ui: &mut Ui, packet: Packet, subs: &Vec<Subcribe>) {
                             .scope(|ui| {
                                 ui.spacing_mut().item_spacing.x = 1.0;
                                 let mut i = 0;
-                                for x in p.topic.split("/") {
+                                for x in p.topic.split('/') {
                                     if i == 0 {
                                         if !x.is_empty() {
                                             ui.label(RichText::new(x).color(Color32::KHAKI));
