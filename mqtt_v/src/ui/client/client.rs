@@ -1,6 +1,7 @@
 use backend::message::{
-    Event, FromClient, MqttOpts, Outgoing, Packet, QoS, ToBackend, ToClient, Topic,
+    Event, FromClient, MqttOpts, Outgoing, Packet, Publish, QoS, ToBackend, ToClient, Topic,
 };
+use chrono::{DateTime, Local};
 use eframe::{
     egui::{style::Margin, CursorIcon, Frame, Label, Layout, RichText, Sense, Ui},
     emath::Align,
@@ -10,10 +11,19 @@ use tokio::sync::mpsc::{error::TrySendError, Sender};
 
 use crate::ui::{widgets::status_led::StatusLed, THEME};
 
+pub enum PacketData {
+    Event(Event),
+    PublishPacket(Publish),
+}
+pub struct ClientPacket {
+    pub time: DateTime<Local>,
+    pub data: PacketData,
+}
+
 pub struct Client {
     pub connected: bool,
     pub options: MqttOpts,
-    pub packets: Vec<Event>,
+    pub packets: Vec<ClientPacket>,
     pub publish_tx: Option<Sender<ToClient>>,
     pub subscriptions: Vec<Subcribe>,
     pub recv: u32,
@@ -66,8 +76,7 @@ impl Client {
     pub fn handle_msg(&mut self, msg: FromClient) {
         match msg {
             FromClient::Event(event) => {
-                let event_c = event.clone();
-                match event {
+                match &event {
                     Event::Incoming(income) => match income {
                         Packet::Connect(_) => {}
                         Packet::ConnAck(_) => {
@@ -104,10 +113,13 @@ impl Client {
                     },
                 }
 
-                self.packets.push(event_c);
+                self.packets.push(ClientPacket {
+                    time: Local::now(),
+                    data: PacketData::Event(event),
+                });
             }
-            FromClient::PublishReslt(result) => {
-                println!("pub result: {:#?}", result);
+            FromClient::PublishReslt(_timestamp, _result) => {
+                // println!("pub result: {},{:#?}", timestamp, result);
             }
             FromClient::Disconnected => self.connected = false,
         }

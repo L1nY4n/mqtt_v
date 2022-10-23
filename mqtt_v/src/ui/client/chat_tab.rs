@@ -177,7 +177,7 @@ impl docking::Tab<Client> for ChatTab {
                 // .max_width(ui.available_width())
                 .show(ui, |ui| {
                     for pkt in &client.packets {
-                        PacketUI::new(pkt.clone()).show(ui, &client.subscriptions)
+                        PacketUI::show(ui, pkt, &client.subscriptions)
                     }
                 });
         });

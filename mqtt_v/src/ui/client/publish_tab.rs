@@ -7,7 +7,7 @@ use eframe::{
 
 use crate::ui::widgets::docking;
 
-use super::client::Client;
+use super::client::{Client, ClientPacket, PacketData};
 
 pub struct PubulishTab {
     topic: String,
@@ -76,10 +76,20 @@ impl docking::Tab<Client> for PubulishTab {
                                         self.payload.as_bytes(),
                                     );
                                     publish.retain = self.retain;
-                                    println!("{:?}", publish);
-                                    let res =
-                                        tx.try_send(backend::message::ToClient::Publish(publish));
-                                    println!("{:?}", res);
+                                    let send_time = chrono::Local::now();
+                                    // todo maybe replace using uuid as sending id
+                                    if tx
+                                        .try_send(backend::message::ToClient::Publish(
+                                            send_time.to_rfc3339(),
+                                            publish.clone(),
+                                        ))
+                                        .is_ok()
+                                    {
+                                        client.packets.push(ClientPacket {
+                                            time: chrono::Local::now(),
+                                            data: PacketData::PublishPacket(publish),
+                                        })
+                                    }
                                 } else {
                                     println!("no tx")
                                 }

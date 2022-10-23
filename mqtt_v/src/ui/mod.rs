@@ -120,7 +120,7 @@ impl eframe::App for MqttAppUI {
 
 impl MqttAppUI {
     fn handle_backend_msg(&mut self, _ctx: &Context) {
-        let mut i = 100;
+        let mut i = 10;
         while i > 0 {
             i -= 1;
 

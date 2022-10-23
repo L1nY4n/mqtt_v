@@ -19,7 +19,7 @@ pub async fn new(
     std::thread::spawn(move || {
         while let Some(msg) = receiver.blocking_recv() {
             match msg {
-                ToClient::Publish(publish) => {
+                ToClient::Publish(pkg_id, publish) => {
                     let Publish {
                         qos,
                         retain,
@@ -29,7 +29,8 @@ pub async fn new(
                         pkid: _,
                     } = publish;
                     let result = client_tx.try_publish(topic, qos, retain, payload);
-                    let _ = sender.try_send((client_id.clone(), FromClient::PublishReslt(result)));
+                    let _ = sender
+                        .try_send((client_id.clone(), FromClient::PublishReslt(pkg_id, result)));
                 }
                 ToClient::Subscribe((topic, qos)) => {
                     let _ = client_tx.try_subscribe(topic, qos);

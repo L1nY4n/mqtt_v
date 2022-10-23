@@ -83,18 +83,20 @@ pub enum ToBackend {
 pub type ClientId = String;
 pub type Topic = String;
 
+pub type PublishRef = String;
+
 #[derive(Debug)]
 pub enum FromClient {
     Disconnected,
     Event(Event),
-    PublishReslt(Result<(), ClientError>),
+    PublishReslt(PublishRef, Result<(), ClientError>),
 }
 
 #[derive(Debug)]
 pub enum ToClient {
     Connect,
     Disconnect,
-    Publish(Publish),
+    Publish(PublishRef, Publish),
     Subscribe((Topic, QoS)),
     Unsubscribe(Topic),
 }
