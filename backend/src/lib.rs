@@ -50,12 +50,8 @@ impl Backend {
                         let tx = self.back_tx.clone();
 
                         rt.spawn(async move {
-                            loop {
-                                while let Some((client_id, client_msg)) = incomming_rx.recv().await
-                                {
-                                    let _ =
-                                        tx.try_send(ToFrontend::ClientMsg(client_id, client_msg));
-                                }
+                            while let Some((client_id, client_msg)) = incomming_rx.recv().await {
+                                let _ = tx.try_send(ToFrontend::ClientMsg(client_id, client_msg));
                             }
                         });
                     }
