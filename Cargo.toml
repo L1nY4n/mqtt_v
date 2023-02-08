@@ -5,10 +5,8 @@ members = [
     "backend"
 ]
 
-
-
 [profile.dev]
-split-debuginfo = "unpacked"
 
 [profile.release]
 opt-level = 3
+# debug = true // profiling 
